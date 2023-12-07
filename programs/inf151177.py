@@ -3,8 +3,8 @@ import warnings
 import glob
 import numpy as np
 import scipy.io.wavfile
-from matplotlib import pylab as plt
 import scipy.io.wavfile as wav
+# from matplotlib import pylab as plt
 
 
 def train_all(wav_files):
@@ -19,6 +19,13 @@ def train_all(wav_files):
     correct = sum(r == e for r, e in zip(res, exp))
     n = len(wav_files)
     print("Accuracy: {0:.1f}%".format(100 * correct / float(n)))
+    return exp, res
+
+
+def confusion_matrix(exp, res):
+    from sklearn.metrics import confusion_matrix
+    cm = confusion_matrix(exp, res, labels=["K", "M"])
+    return cm
 
 
 def find_gender(file):
@@ -52,7 +59,7 @@ def find_gender(file):
                                       (time_seconds <= time_end)]
 
     fundamental_frequency = freq_from_hps(audio_to_analyze, fs)
-    print('Fundamental frequency is {} Hz'.format(fundamental_frequency))
+    # print('Fundamental frequency is {} Hz'.format(fundamental_frequency))
     if 170 >= fundamental_frequency:
         gender = "M"
         print(gender)
@@ -79,7 +86,7 @@ def freq_from_hps(signal, fs):
     # Remove mean of spectrum
     X -= np.mean(X)
 
-    # Downsample sum logs of spectra instead of multiplying
+    # Downsample sum logs of spectrum
     hps = np.copy(X)
     for h in range(2, 9):
         dec = scipy.signal.decimate(X, h, zero_phase=True)
@@ -95,9 +102,10 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         print("Invalid number of arguments")
         print("Running on training data")
-
         files = glob.glob('../data/lab3_data/lab_3b/train/*.wav')
-        train_all(files)
+        exp, res = train_all(files)
+        print("Confusion Matrix:")
+        print(confusion_matrix(exp, res))
         print("To use on test data: python3 inf151177.py <path_to_wav_file>")
     else:
         find_gender(sys.argv[1])
